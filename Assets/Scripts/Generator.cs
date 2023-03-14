@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using UnityEngine.UI;
+using SimpleFileBrowser;
 public class Generator : MonoBehaviour
 {
     [Header("Properies")]
-    public string savePath = @"C:\QRGenerate\ACMECS\";
     public string filePath;
-    public string[] contents;
     public bool isProcessing = false;
     public bool onGenerate = false;
 
@@ -18,10 +17,6 @@ public class Generator : MonoBehaviour
     [Header("Component")]
     public QRCodeEncodeController qrCodeEncodeController;
 
-    public int startNumber = 1;
-    public int endNumber = 1000;
-    public int currentNumber = 0;
-    public string currentFileName = "";
 
     /// <summary>
     /// Start is called on the frame when a script is enabled just before
@@ -30,32 +25,62 @@ public class Generator : MonoBehaviour
     private void Start()
     {
         qrCodeEncodeController.onQREncodeFinished += OnEncoded;
+        FileBrowser.SetFilters(true, new FileBrowser.Filter("Text Files", ".txt"));
+        FileBrowser.SetDefaultFilter(".txt");
+        FileBrowser.SetExcludedExtensions(".jpg", ".png", ".lnk", ".tmp", ".zip", ".rar", ".exe");
     }
 
-    public void ReadFile()
+    public void SelectFile()
     {
-        filePath = filePathInputField.text;
+        StartCoroutine(ShowLoadDialogCoroutine());
+    }
 
-        if(string.IsNullOrEmpty(filePath))
-        {
-            Debug.Log("Please enter file path.");
-            return;
-        }
+    IEnumerator ShowLoadDialogCoroutine()
+    {
+        // Show a load file dialog and wait for a response from user
+        // Load file/folder: both, Allow multiple selection: true
+        // Initial path: default (Documents), Initial filename: empty
+        // Title: "Load File", Submit button text: "Load"
+        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Files, true, null, null, "Select Text File", "Select");
 
-        if (File.Exists(filePath))
+        // Dialog is closed
+        // Print whether the user has selected some files/folders or cancelled the operation (FileBrowser.Success)
+        Debug.Log(FileBrowser.Success);
+
+        if (FileBrowser.Success)
         {
-            contents = File.ReadAllLines(filePath);
-            Debug.Log(contents.Length);
+            if (FileBrowser.Result.Length > 0)
+            {
+                string path = FileBrowser.Result[0];
+                 DisplayFilePath(path);
+            }
+            // Print paths of the selected files (FileBrowser.Result) (null, if FileBrowser.Success is false)
+            // for (int i = 0; i < FileBrowser.Result.Length; i++)
+            //     Debug.Log(FileBrowser.Result[i]);
+
+            // Read the bytes of the first file via FileBrowserHelpers
+            // Contrary to File.ReadAllBytes, this function works on Android 10+, as well
+            // byte[] bytes = FileBrowserHelpers.ReadBytesFromFile(FileBrowser.Result[0]);
+
+            // Or, copy the first file to persistentDataPath
+            // string destinationPath = Path.Combine(Application.persistentDataPath, FileBrowserHelpers.GetFilename(FileBrowser.Result[0]));
+            // FileBrowserHelpers.CopyFile(FileBrowser.Result[0], destinationPath);
+            // Debug.Log(destinationPath);
         }
         else
         {
-            Debug.LogError("File not found: " + filePath);
+            DisplayFilePath(string.Empty);
         }
     }
 
-    public void Generate()
+    private void DisplayFilePath(string path)
     {
-        if(!isProcessing)
+        filePathInputField.text = string.Format("{0}", path);
+    }
+
+    public void StartGenerate()
+    {
+        if (!isProcessing)
         {
             StartCoroutine(Co_Generate());
         }
@@ -63,31 +88,28 @@ public class Generator : MonoBehaviour
 
     IEnumerator Co_Generate()
     {
-        isProcessing = true;
-        currentNumber = startNumber;
-
-        while(currentNumber <= endNumber)
-        {
-            onGenerate = true;
-            currentFileName = currentNumber+".png";
-            string content = "https://acmecs-businessmatching.com/match/?uid="+currentNumber+"&openExternalBrowser=1";
-            qrCodeEncodeController.Encode(content);
-            currentNumber++;
-            yield return new WaitUntil(()=> onGenerate == false);
-        }
         yield return null;
+        isProcessing = true;
+        // currentNumber = startNumber;
 
-
+        // while (currentNumber <= endNumber)
+        // {
+        //     onGenerate = true;
+        //     currentFileName = currentNumber + ".png";
+        //     string content = "https://acmecs-businessmatching.com/match/?uid=" + currentNumber + "&openExternalBrowser=1";
+        //     qrCodeEncodeController.Encode(content);
+        //     currentNumber++;
+        //     yield return new WaitUntil(() => onGenerate == false);
+        // }
 
         isProcessing = false;
     }
 
     private void OnEncoded(Texture2D texture)
     {
-        byte[] bytes = texture.EncodeToPNG();
-        string path = savePath+currentFileName;
-        File.WriteAllBytes(path,bytes);
-        Debug.Log(currentFileName+" Saved");
-        onGenerate = false;
+        // byte[] bytes = texture.EncodeToPNG();
+        // string path = savePath + currentFileName;
+        // File.WriteAllBytes(path, bytes);
+        // onGenerate = false;
     }
 }
