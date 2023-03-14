@@ -6,17 +6,29 @@ using UnityEngine.UI;
 using SimpleFileBrowser;
 public class Generator : MonoBehaviour
 {
+    /* https://github.com/yasirkula/UnitySimpleFileBrowser */
+
     [Header("Properies")]
     public string filePath;
+    public string savePath;
+    public string prefixFileName;
     public bool isProcessing = false;
     public bool onGenerate = false;
 
     [Header("UI")]
     public InputField filePathInputField;
+    public InputField savePathInputField;
+    public InputField prefixInputField;
+
+    /*file detail*/
+    public Text lineCountText;
+    public Text firstLineContentText;
+    public Text lastLineContentText;
+    public Text exampleFileNameText;
+    public Button generateQRCodeButton;
 
     [Header("Component")]
     public QRCodeEncodeController qrCodeEncodeController;
-
 
     /// <summary>
     /// Start is called on the frame when a script is enabled just before
@@ -25,57 +37,111 @@ public class Generator : MonoBehaviour
     private void Start()
     {
         qrCodeEncodeController.onQREncodeFinished += OnEncoded;
+        generateQRCodeButton.interactable = false;
+
         FileBrowser.SetFilters(true, new FileBrowser.Filter("Text Files", ".txt"));
         FileBrowser.SetDefaultFilter(".txt");
         FileBrowser.SetExcludedExtensions(".jpg", ".png", ".lnk", ".tmp", ".zip", ".rar", ".exe");
+
+        /* reset line count text */
+        lineCountText.text = string.Format("Line count: {0}", "-");
     }
 
-    public void SelectFile()
+    public void OnPrefixChanged()
     {
-        StartCoroutine(ShowLoadDialogCoroutine());
+        prefixFileName = prefixInputField.text.Trim();
     }
 
-    IEnumerator ShowLoadDialogCoroutine()
+    public void SelectFilePath()
     {
-        // Show a load file dialog and wait for a response from user
-        // Load file/folder: both, Allow multiple selection: true
-        // Initial path: default (Documents), Initial filename: empty
-        // Title: "Load File", Submit button text: "Load"
-        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Files, true, null, null, "Select Text File", "Select");
+        StartCoroutine(SelectFilePathCoroutine());
+    }
 
-        // Dialog is closed
-        // Print whether the user has selected some files/folders or cancelled the operation (FileBrowser.Success)
-        Debug.Log(FileBrowser.Success);
+    public void SelectSavePath()
+    {
+        StartCoroutine(SelectSavePathCoroutine());
+    }
+
+    IEnumerator SelectFilePathCoroutine()
+    {
+        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Files, false, null, null, "Select Text File", "Select");
 
         if (FileBrowser.Success)
         {
             if (FileBrowser.Result.Length > 0)
             {
-                string path = FileBrowser.Result[0];
-                 DisplayFilePath(path);
+                filePath = FileBrowser.Result[0];
+                ReadFile();
             }
-            // Print paths of the selected files (FileBrowser.Result) (null, if FileBrowser.Success is false)
-            // for (int i = 0; i < FileBrowser.Result.Length; i++)
-            //     Debug.Log(FileBrowser.Result[i]);
-
-            // Read the bytes of the first file via FileBrowserHelpers
-            // Contrary to File.ReadAllBytes, this function works on Android 10+, as well
-            // byte[] bytes = FileBrowserHelpers.ReadBytesFromFile(FileBrowser.Result[0]);
-
-            // Or, copy the first file to persistentDataPath
-            // string destinationPath = Path.Combine(Application.persistentDataPath, FileBrowserHelpers.GetFilename(FileBrowser.Result[0]));
-            // FileBrowserHelpers.CopyFile(FileBrowser.Result[0], destinationPath);
-            // Debug.Log(destinationPath);
         }
         else
         {
-            DisplayFilePath(string.Empty);
+            filePath = string.Empty;
+        }
+
+        DisplayPath();
+    }
+
+
+
+    IEnumerator SelectSavePathCoroutine()
+    {
+        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Folders, true, null, null, "Select Directory", "Select");
+
+        if (FileBrowser.Success)
+        {
+
+            if (FileBrowser.Result.Length > 0)
+            {
+                savePath = FileBrowser.Result[0];
+            }
+        }
+        else
+        {
+            savePath = string.Empty;
+        }
+
+        DisplayPath();
+    }
+
+    IEnumerator CopyFile(string path)
+    {
+        byte[] bytes = FileBrowserHelpers.ReadBytesFromFile(path);
+        yield return null;
+
+        string destinationPath = Path.Combine(Application.persistentDataPath, FileBrowserHelpers.GetFilename(path));
+        FileBrowserHelpers.CopyFile(path, destinationPath);
+        Debug.Log(destinationPath);
+    }
+
+    private void DisplayPath()
+    {
+        filePathInputField.text = string.Format("{0}", filePath);
+        savePathInputField.text = string.Format("{0}", savePath);
+
+        /* set line count to - if file path is empty */
+        if (string.IsNullOrEmpty(filePath))
+        {
+            lineCountText.text = string.Format("Line count: {0}", "-");
+        }
+
+
+        if (!string.IsNullOrEmpty(filePath) && !string.IsNullOrEmpty(savePath))
+        {
+            generateQRCodeButton.interactable = true;
+        }
+        else
+        {
+            generateQRCodeButton.interactable = false;
         }
     }
 
-    private void DisplayFilePath(string path)
+    private void ReadFile()
     {
-        filePathInputField.text = string.Format("{0}", path);
+        string[] lines = File.ReadAllLines(filePath);
+        lineCountText.text = string.Format("Line count: {0}", lines.Length);
+        firstLineContentText.text = string.Format("First line content: {0}", lines[0]);
+        lastLineContentText.text = string.Format("Last line content: {0}", lines[lines.Length - 1]);
     }
 
     public void StartGenerate()
