@@ -8,6 +8,19 @@ public class Generator : MonoBehaviour
 {
     /* https://github.com/yasirkula/UnitySimpleFileBrowser */
 
+    public enum MODE { SINGLE, MULTI }
+    public MODE mode = MODE.SINGLE;
+    public Text modeText;
+
+    [Header("Script Component")]
+    public SingleMode singleMode;
+    public MultipleMode multipleMode;
+
+    [Header("Panel")]
+    public GameObject singlePanel;
+    public GameObject multiPanel;
+
+
     [Header("Properies")]
     public string filePath;
     public string savePath;
@@ -16,15 +29,15 @@ public class Generator : MonoBehaviour
     public bool onGenerate = false;
 
     [Header("UI")]
-    public InputField filePathInputField;
+    
     public InputField savePathInputField;
     public InputField prefixInputField;
+    public RawImage qrPreview;
+    public Text progressText;
+    public Text currentFileNameText;
 
-    /*file detail*/
-    public Text lineCountText;
-    public Text firstLineContentText;
-    public Text lastLineContentText;
-    public Text exampleFileNameText;
+    
+    
     public Button generateQRCodeButton;
 
     [Header("Component")]
@@ -44,17 +57,39 @@ public class Generator : MonoBehaviour
         FileBrowser.SetExcludedExtensions(".jpg", ".png", ".lnk", ".tmp", ".zip", ".rar", ".exe");
 
         /* reset line count text */
-        lineCountText.text = string.Format("Line count: {0}", "-");
+       
+       
+
+        singleMode.Initialize();
+        singleMode.m_OnInputFieldChanged += OnSingleModeInputChanged;
+
+        multipleMode.Initialize();
+
+        ChangeMode("single");
     }
 
+
+    public void ChangeMode(string mode)
+    {
+        this.mode = mode == "single" ? MODE.SINGLE : MODE.MULTI;
+        singlePanel.SetActive(this.mode == MODE.SINGLE);
+        multiPanel.SetActive(this.mode == MODE.MULTI);
+
+        /* display mode */
+        modeText.text = string.Format("{0} MODE", this.mode.ToString());
+    }
+
+    private void OnSingleModeInputChanged(string text)
+    {
+        /* to check generate wording is not empty */
+
+    }
+
+
+    /* to setup filename */
     public void OnPrefixChanged()
     {
         prefixFileName = prefixInputField.text.Trim();
-    }
-
-    public void SelectFilePath()
-    {
-        StartCoroutine(SelectFilePathCoroutine());
     }
 
     public void SelectSavePath()
@@ -62,35 +97,12 @@ public class Generator : MonoBehaviour
         StartCoroutine(SelectSavePathCoroutine());
     }
 
-    IEnumerator SelectFilePathCoroutine()
-    {
-        yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Files, false, null, null, "Select Text File", "Select");
-
-        if (FileBrowser.Success)
-        {
-            if (FileBrowser.Result.Length > 0)
-            {
-                filePath = FileBrowser.Result[0];
-                ReadFile();
-            }
-        }
-        else
-        {
-            filePath = string.Empty;
-        }
-
-        DisplayPath();
-    }
-
-
-
     IEnumerator SelectSavePathCoroutine()
     {
         yield return FileBrowser.WaitForLoadDialog(FileBrowser.PickMode.Folders, true, null, null, "Select Directory", "Select");
 
         if (FileBrowser.Success)
         {
-
             if (FileBrowser.Result.Length > 0)
             {
                 savePath = FileBrowser.Result[0];
@@ -101,31 +113,46 @@ public class Generator : MonoBehaviour
             savePath = string.Empty;
         }
 
-        DisplayPath();
+        DisplaySavePath();
     }
 
-    IEnumerator CopyFile(string path)
-    {
-        byte[] bytes = FileBrowserHelpers.ReadBytesFromFile(path);
-        yield return null;
+  
 
-        string destinationPath = Path.Combine(Application.persistentDataPath, FileBrowserHelpers.GetFilename(path));
-        FileBrowserHelpers.CopyFile(path, destinationPath);
-        Debug.Log(destinationPath);
+    public void DisplaySavePath()
+    {
+        savePathInputField.text = string.Format("{0}", savePath);
+
+        if (string.IsNullOrEmpty(savePathInputField.text))
+        {
+            generateQRCodeButton.interactable = false;
+            return;
+        }
+
+        /* check can generate */
+        if (mode == MODE.SINGLE)
+        {
+            if (string.IsNullOrEmpty(singleMode.wordingToGenerate))
+            {
+                generateQRCodeButton.interactable = false;
+                return;
+            }
+        }
+
+        if (mode == MODE.MULTI)
+        {
+            if (multipleMode.wordingToGenerate.Length == 0)
+            {
+                generateQRCodeButton.interactable = false;
+                return;
+            }
+        }
     }
 
     private void DisplayPath()
     {
-        filePathInputField.text = string.Format("{0}", filePath);
         savePathInputField.text = string.Format("{0}", savePath);
 
-        /* set line count to - if file path is empty */
-        if (string.IsNullOrEmpty(filePath))
-        {
-            lineCountText.text = string.Format("Line count: {0}", "-");
-        }
-
-
+      
         if (!string.IsNullOrEmpty(filePath) && !string.IsNullOrEmpty(savePath))
         {
             generateQRCodeButton.interactable = true;
@@ -134,14 +161,6 @@ public class Generator : MonoBehaviour
         {
             generateQRCodeButton.interactable = false;
         }
-    }
-
-    private void ReadFile()
-    {
-        string[] lines = File.ReadAllLines(filePath);
-        lineCountText.text = string.Format("Line count: {0}", lines.Length);
-        firstLineContentText.text = string.Format("First line content: {0}", lines[0]);
-        lastLineContentText.text = string.Format("Last line content: {0}", lines[lines.Length - 1]);
     }
 
     public void StartGenerate()
