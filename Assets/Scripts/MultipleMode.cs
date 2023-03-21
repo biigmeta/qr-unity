@@ -8,18 +8,34 @@ using UnityEngine.UI;
 public class MultipleMode : MonoBehaviour
 {
     [Header("Properties")]
+    public bool canGenerate = false;
     public string filePath;
     public string[] wordingToGenerate;
+    public string prefixFileName;
 
     [Header("UI")]
+    public Toggle canGenerateStatusToggle;
     public InputField filePathInputField;
+    public InputField prefixInputField;
     public Text lineCountText;
-    public Button previewContentButton;
 
 
     public void Initialize()
     {
-        previewContentButton.interactable = false;
+        canGenerateStatusToggle.isOn = true;
+        canGenerateStatusToggle.gameObject.SetActive(canGenerate);
+        ClearPrefix();
+    }
+
+    public void OnPrefixChanged()
+    {
+        prefixFileName = prefixInputField.text.Trim();
+    }
+
+    public void ClearPrefix()
+    {
+        prefixFileName = string.Empty;
+        prefixInputField.text = prefixFileName;
     }
 
     public void SelectFilePath()
@@ -51,10 +67,10 @@ public class MultipleMode : MonoBehaviour
     {
         string[] lines = File.ReadAllLines(filePath);
         lineCountText.text = string.Format("Line count: {0}", lines.Length);
-        
-        if(lines.Length > 0)
+
+        if (lines.Length > 0)
         {
-            previewContentButton.interactable = true;
+
         }
     }
 

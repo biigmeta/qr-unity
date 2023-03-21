@@ -22,22 +22,16 @@ public class Generator : MonoBehaviour
 
 
     [Header("Properies")]
-    public string filePath;
     public string savePath;
-    public string prefixFileName;
     public bool isProcessing = false;
     public bool onGenerate = false;
 
     [Header("UI")]
-    
+
     public InputField savePathInputField;
-    public InputField prefixInputField;
     public RawImage qrPreview;
     public Text progressText;
     public Text currentFileNameText;
-
-    
-    
     public Button generateQRCodeButton;
 
     [Header("Component")]
@@ -56,9 +50,6 @@ public class Generator : MonoBehaviour
         FileBrowser.SetDefaultFilter(".txt");
         FileBrowser.SetExcludedExtensions(".jpg", ".png", ".lnk", ".tmp", ".zip", ".rar", ".exe");
 
-        /* reset line count text */
-       
-       
 
         singleMode.Initialize();
         singleMode.m_OnInputFieldChanged += OnSingleModeInputChanged;
@@ -81,20 +72,26 @@ public class Generator : MonoBehaviour
 
     private void OnSingleModeInputChanged(string text)
     {
+        if (mode != MODE.SINGLE) return;
+
         /* to check generate wording is not empty */
+        if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(savePath))
+        {
+            generateQRCodeButton.interactable = false;
+            return;
+        }
 
-    }
-
-
-    /* to setup filename */
-    public void OnPrefixChanged()
-    {
-        prefixFileName = prefixInputField.text.Trim();
+        generateQRCodeButton.interactable = true;
     }
 
     public void SelectSavePath()
     {
         StartCoroutine(SelectSavePathCoroutine());
+    }
+
+    public void OpenSavePath()
+    {
+        Application.OpenURL(savePath);
     }
 
     IEnumerator SelectSavePathCoroutine()
@@ -116,13 +113,13 @@ public class Generator : MonoBehaviour
         DisplaySavePath();
     }
 
-  
+
 
     public void DisplaySavePath()
     {
         savePathInputField.text = string.Format("{0}", savePath);
 
-        if (string.IsNullOrEmpty(savePathInputField.text))
+        if (string.IsNullOrEmpty(savePath))
         {
             generateQRCodeButton.interactable = false;
             return;
@@ -131,7 +128,7 @@ public class Generator : MonoBehaviour
         /* check can generate */
         if (mode == MODE.SINGLE)
         {
-            if (string.IsNullOrEmpty(singleMode.wordingToGenerate))
+            if (string.IsNullOrEmpty(singleMode.text))
             {
                 generateQRCodeButton.interactable = false;
                 return;
@@ -146,35 +143,52 @@ public class Generator : MonoBehaviour
                 return;
             }
         }
+
+        generateQRCodeButton.interactable = true;
     }
 
-    private void DisplayPath()
-    {
-        savePathInputField.text = string.Format("{0}", savePath);
-
-      
-        if (!string.IsNullOrEmpty(filePath) && !string.IsNullOrEmpty(savePath))
-        {
-            generateQRCodeButton.interactable = true;
-        }
-        else
-        {
-            generateQRCodeButton.interactable = false;
-        }
-    }
 
     public void StartGenerate()
     {
         if (!isProcessing)
         {
-            StartCoroutine(Co_Generate());
+            if (mode == MODE.SINGLE)
+            {
+                StartCoroutine(Co_GenerateSingle());
+            }
+
+            if (mode == MODE.MULTI)
+            {
+                StartCoroutine(Co_GenerateMultiple());
+            }
         }
     }
 
-    IEnumerator Co_Generate()
+    IEnumerator Co_GenerateSingle()
     {
         yield return null;
         isProcessing = true;
+
+        // currentNumber = startNumber;
+
+        // while (currentNumber <= endNumber)
+        // {
+        //     onGenerate = true;
+        //     currentFileName = currentNumber + ".png";
+        //     string content = "https://acmecs-businessmatching.com/match/?uid=" + currentNumber + "&openExternalBrowser=1";
+        //     qrCodeEncodeController.Encode(content);
+        //     currentNumber++;
+        //     yield return new WaitUntil(() => onGenerate == false);
+        // }
+
+        isProcessing = false;
+    }
+
+    IEnumerator Co_GenerateMultiple()
+    {
+        yield return null;
+        isProcessing = true;
+
         // currentNumber = startNumber;
 
         // while (currentNumber <= endNumber)
