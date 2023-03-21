@@ -33,7 +33,9 @@ public class SingleMode : MonoBehaviour
 
         canGenerateStatusToggle.isOn = true;
         canGenerateStatusToggle.gameObject.SetActive(canGenerate);
-        Clear();
+
+        ClearText();
+        ClearFileName();
     }
     public void OnInputFieldChanged()
     {
@@ -51,26 +53,29 @@ public class SingleMode : MonoBehaviour
         }
 
         textTypeText.text = string.Format("{0}", isURI ? "** This text is uri. You must provide filename before generate QR Code." : "");
-
         CheckCanGenerateCode();
     }
 
-    public void OnFileNameChanged()
-    {
-        fileName = wordingInputField.text.Trim();
-        CheckCanGenerateCode();
-    }
-
-    /*For single mode*/
-    public void Clear()
+    public void ClearText()
     {
         text = string.Empty;
         wordingInputField.text = text;
     }
 
+    public void OnFileNameChanged()
+    {
+        fileName = fileNameInputField.text.Trim();
+        CheckCanGenerateCode();
+    }
+
+    public void ClearFileName()
+    {
+        fileName = string.Empty;
+        fileNameInputField.text = fileName;
+    }
+
     private void CheckCanGenerateCode()
     {
-
         if (string.IsNullOrEmpty(text))
         {
             canGenerate = false;

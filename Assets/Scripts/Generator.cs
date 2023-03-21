@@ -23,6 +23,7 @@ public class Generator : MonoBehaviour
 
     [Header("Properies")]
     public string savePath;
+    public string currentFileName;
     public bool isProcessing = false;
     public bool onGenerate = false;
 
@@ -32,7 +33,12 @@ public class Generator : MonoBehaviour
     public RawImage qrPreview;
     public Text progressText;
     public Text currentFileNameText;
+    public Text fullPathText;
+    public Image progressBarImage;
+
+
     public Button generateQRCodeButton;
+    public Button resetButton;
 
     [Header("Component")]
     public QRCodeEncodeController qrCodeEncodeController;
@@ -43,18 +49,17 @@ public class Generator : MonoBehaviour
     /// </summary>
     private void Start()
     {
+
+        /* add event listener  ** do this once ** */
         qrCodeEncodeController.onQREncodeFinished += OnEncoded;
-        generateQRCodeButton.interactable = false;
+        // singleMode.m_OnInputFieldChanged += OnSingleModeInputChanged;
+        singleMode.m_OnSingleCodeCangenerate += OnSingleCodeCangenerate;
 
         FileBrowser.SetFilters(true, new FileBrowser.Filter("Text Files", ".txt"));
         FileBrowser.SetDefaultFilter(".txt");
         FileBrowser.SetExcludedExtensions(".jpg", ".png", ".lnk", ".tmp", ".zip", ".rar", ".exe");
 
-
-        singleMode.Initialize();
-        singleMode.m_OnInputFieldChanged += OnSingleModeInputChanged;
-
-        multipleMode.Initialize();
+        Reset();
 
         ChangeMode("single");
     }
@@ -68,6 +73,18 @@ public class Generator : MonoBehaviour
 
         /* display mode */
         modeText.text = string.Format("{0} MODE", this.mode.ToString());
+    }
+
+    private void OnSingleCodeCangenerate(bool canGenerate)
+    {
+        /* to check generate wording is not empty */
+        if (string.IsNullOrEmpty(savePath))
+        {
+            generateQRCodeButton.interactable = false;
+            return;
+        }
+
+        generateQRCodeButton.interactable = canGenerate;
     }
 
     private void OnSingleModeInputChanged(string text)
@@ -147,6 +164,20 @@ public class Generator : MonoBehaviour
         generateQRCodeButton.interactable = true;
     }
 
+    public void Reset()
+    {
+        singleMode.Initialize();
+        multipleMode.Initialize();
+
+        progressBarImage.fillAmount = 0;
+        progressText.text = string.Format("{0}/{1}", 0, 0);
+        currentFileNameText.text = string.Format("File name: ", "-");
+        fullPathText.text = string.Format("Path: ", "-");
+        qrPreview.texture = new Texture2D(1, 1);
+
+        generateQRCodeButton.interactable = false;
+        resetButton.interactable = false;
+    }
 
     public void StartGenerate()
     {
@@ -166,22 +197,36 @@ public class Generator : MonoBehaviour
 
     IEnumerator Co_GenerateSingle()
     {
+        Debug.Log("start generate");
         yield return null;
         isProcessing = true;
+        onGenerate = true;
 
-        // currentNumber = startNumber;
+        int maxContent = 1;
+        int currentIndex = 0;
 
-        // while (currentNumber <= endNumber)
-        // {
-        //     onGenerate = true;
-        //     currentFileName = currentNumber + ".png";
-        //     string content = "https://acmecs-businessmatching.com/match/?uid=" + currentNumber + "&openExternalBrowser=1";
-        //     qrCodeEncodeController.Encode(content);
-        //     currentNumber++;
-        //     yield return new WaitUntil(() => onGenerate == false);
-        // }
+        progressText.text = string.Format("{0}/{1}", currentIndex, maxContent);
+
+        if (!string.IsNullOrEmpty(singleMode.fileName))
+        {
+            currentFileName = singleMode.fileName + ".png";
+        }
+        else
+        {
+            currentFileName = System.DateTime.Now.ToString("yyyyMMddHHmmssfff") + ".png";
+        }
+
+        currentFileNameText.text = string.Format("File name: {0}", currentFileName);
+
+        qrCodeEncodeController.Encode(singleMode.text);
+        yield return new WaitUntil(() => onGenerate == false);
+
+        currentIndex++;
+        progressText.text = string.Format("{0}/{1}", currentIndex, maxContent);
+        progressBarImage.fillAmount = (float)currentIndex / (float)maxContent;
 
         isProcessing = false;
+        resetButton.interactable = true;
     }
 
     IEnumerator Co_GenerateMultiple()
@@ -202,13 +247,19 @@ public class Generator : MonoBehaviour
         // }
 
         isProcessing = false;
+        resetButton.interactable = true;
     }
 
     private void OnEncoded(Texture2D texture)
     {
-        // byte[] bytes = texture.EncodeToPNG();
-        // string path = savePath + currentFileName;
-        // File.WriteAllBytes(path, bytes);
-        // onGenerate = false;
+        byte[] bytes = texture.EncodeToPNG();
+        string fullPath = savePath + "/" + currentFileName;
+
+        qrPreview.texture = texture;
+
+        File.WriteAllBytes(fullPath, bytes);
+        fullPathText.text = string.Format("Path: {0}", fullPath);
+
+        onGenerate = false;
     }
 }
