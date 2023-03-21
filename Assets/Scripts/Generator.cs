@@ -169,6 +169,8 @@ public class Generator : MonoBehaviour
         singleMode.Initialize();
         multipleMode.Initialize();
 
+        currentFileName = string.Empty;
+
         progressBarImage.fillAmount = 0;
         progressText.text = string.Format("{0}/{1}", 0, 0);
         currentFileNameText.text = string.Format("File name: ", "-");
