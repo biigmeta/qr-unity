@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5499595137287308695}
   - component: {fileID: 5499595137287308693}
   - component: {fileID: 5499595137287308692}
+  - component: {fileID: 1151024286208196575}
   m_Layer: 5
   m_Name: TextPrefab
   m_TagString: Untagged
@@ -78,4 +79,16 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '- QR Qode'
+  m_Text: 
+--- !u!114 &1151024286208196575
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5499595137287308694}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bebd8c792f1ea246bab6274a7ea79eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

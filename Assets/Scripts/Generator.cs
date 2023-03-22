@@ -49,18 +49,11 @@ public class Generator : MonoBehaviour
     /// </summary>
     private void Start()
     {
-
         /* add event listener  ** do this once ** */
         qrCodeEncodeController.onQREncodeFinished += OnEncoded;
-        // singleMode.m_OnInputFieldChanged += OnSingleModeInputChanged;
         singleMode.m_OnSingleCodeCangenerate += OnSingleCodeCangenerate;
 
-        FileBrowser.SetFilters(true, new FileBrowser.Filter("Text Files", ".txt"));
-        FileBrowser.SetDefaultFilter(".txt");
-        FileBrowser.SetExcludedExtensions(".jpg", ".png", ".lnk", ".tmp", ".zip", ".rar", ".exe");
-
         Reset();
-
         ChangeMode("single");
     }
 
@@ -85,20 +78,6 @@ public class Generator : MonoBehaviour
         }
 
         generateQRCodeButton.interactable = canGenerate;
-    }
-
-    private void OnSingleModeInputChanged(string text)
-    {
-        if (mode != MODE.SINGLE) return;
-
-        /* to check generate wording is not empty */
-        if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(savePath))
-        {
-            generateQRCodeButton.interactable = false;
-            return;
-        }
-
-        generateQRCodeButton.interactable = true;
     }
 
     public void SelectSavePath()
@@ -129,9 +108,6 @@ public class Generator : MonoBehaviour
 
         DisplaySavePath();
     }
-
-
-
     public void DisplaySavePath()
     {
         savePathInputField.text = string.Format("{0}", savePath);
@@ -254,14 +230,40 @@ public class Generator : MonoBehaviour
 
     private void OnEncoded(Texture2D texture)
     {
-        byte[] bytes = texture.EncodeToPNG();
         string fullPath = savePath + "/" + currentFileName;
-
-        qrPreview.texture = texture;
+        Texture2D rotatedTexture = RotateTexture(texture, true);
+        byte[] bytes = rotatedTexture.EncodeToPNG();
+        qrPreview.texture = rotatedTexture;
 
         File.WriteAllBytes(fullPath, bytes);
         fullPathText.text = string.Format("Path: {0}", fullPath);
 
         onGenerate = false;
+    }
+
+    /* http://answers.unity.com/answers/1401997/view.html */
+    Texture2D RotateTexture(Texture2D originalTexture, bool clockwise)
+    {
+        Color32[] original = originalTexture.GetPixels32();
+        Color32[] rotated = new Color32[original.Length];
+        int w = originalTexture.width;
+        int h = originalTexture.height;
+
+        int iRotated, iOriginal;
+
+        for (int j = 0; j < h; ++j)
+        {
+            for (int i = 0; i < w; ++i)
+            {
+                iRotated = (i + 1) * h - j - 1;
+                iOriginal = clockwise ? original.Length - 1 - (j * w + i) : j * w + i;
+                rotated[iRotated] = original[iOriginal];
+            }
+        }
+
+        Texture2D rotatedTexture = new Texture2D(h, w);
+        rotatedTexture.SetPixels32(rotated);
+        rotatedTexture.Apply();
+        return rotatedTexture;
     }
 }

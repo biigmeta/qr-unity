@@ -2,14 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Net;
 using System;
 
 public class SingleMode : MonoBehaviour
 {
-    public delegate void OnInputFieldChangedHandler(string text);
-    public OnInputFieldChangedHandler m_OnInputFieldChanged;
-
     public delegate void OnSingleCodeCanGenerateHandler(bool canGenerate);
     public OnSingleCodeCanGenerateHandler m_OnSingleCodeCangenerate;
 

@@ -12,6 +12,7 @@ public class MultipleMode : MonoBehaviour
     public string filePath;
     public string[] wordingToGenerate;
     public string prefixFileName;
+    public int maximumDisplayLine = 1000;
 
     [Header("UI")]
     public Toggle canGenerateStatusToggle;
@@ -19,17 +20,42 @@ public class MultipleMode : MonoBehaviour
     public InputField prefixInputField;
     public Text lineCountText;
 
+    [Header("Preview")]
+    public ScrollRect contentPreviewRect;
+    public ContentText textContentPrefab;
+
 
     public void Initialize()
     {
         canGenerateStatusToggle.isOn = true;
         canGenerateStatusToggle.gameObject.SetActive(canGenerate);
+
+        FileBrowser.SetFilters(true, new FileBrowser.Filter("Text Files", ".txt"));
+        FileBrowser.SetDefaultFilter(".txt");
+        FileBrowser.SetExcludedExtensions(".jpg", ".png", ".lnk", ".tmp", ".zip", ".rar", ".exe");
+
+        Reset();
+    }
+
+    public void Reset()
+    {
+        lineCountText.text = string.Format("Count: {0}", 0);
+        ClearPreviewContainer();
         ClearPrefix();
     }
 
     public void OnPrefixChanged()
     {
         prefixFileName = prefixInputField.text.Trim();
+    }
+
+    /* clear any object in preview rect */
+    private void ClearPreviewContainer()
+    {
+        foreach (Transform a in contentPreviewRect.content)
+        {
+            Destroy(a.gameObject);
+        }
     }
 
     public void ClearPrefix()
@@ -68,9 +94,24 @@ public class MultipleMode : MonoBehaviour
         string[] lines = File.ReadAllLines(filePath);
         lineCountText.text = string.Format("Line count: {0}", lines.Length);
 
+        ClearPreviewContainer();
+
         if (lines.Length > 0)
         {
+            int counter = 0;
+            foreach (string a in lines)
+            {
+                /* break loop when instantiate more than maximum lines */
+                if (counter >= maximumDisplayLine) break;
 
+                /* create content text object in preview container */
+                ContentText contentText = Instantiate(textContentPrefab, contentPreviewRect.content.transform);
+                /* set text to display each content line */
+                contentText.SetElement(a);
+                counter++;
+            }
+        }else{
+            /* do something if can not read data from file */
         }
     }
 
