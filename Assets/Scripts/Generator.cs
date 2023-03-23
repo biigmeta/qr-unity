@@ -130,7 +130,7 @@ public class Generator : MonoBehaviour
 
         if (mode == MODE.MULTI)
         {
-            if (multipleMode.wordingToGenerate.Length == 0)
+            if (multipleMode.contents.Length == 0)
             {
                 generateQRCodeButton.interactable = false;
                 return;

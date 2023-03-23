@@ -4,19 +4,25 @@ using UnityEngine;
 using System.IO;
 using SimpleFileBrowser;
 using UnityEngine.UI;
+using System.Linq;
 
 public class MultipleMode : MonoBehaviour
 {
     [Header("Properties")]
     public bool canGenerate = false;
     public string filePath;
-    public string[] wordingToGenerate;
+    public string[] contents;
+    public string[] textLines;
+    public string[] fileNames;
+
+    public string splitCharacter;
     public string prefixFileName;
     public int maximumDisplayLine = 1000;
 
     [Header("UI")]
     public Toggle canGenerateStatusToggle;
     public InputField filePathInputField;
+    public InputField splitInputField;
     public InputField prefixInputField;
     public Text lineCountText;
 
@@ -44,6 +50,11 @@ public class MultipleMode : MonoBehaviour
         ClearPrefix();
     }
 
+    public void OnSplitCharacterChanged()
+    {
+        splitCharacter = splitInputField.text;
+    }
+
     public void OnPrefixChanged()
     {
         prefixFileName = prefixInputField.text.Trim();
@@ -58,10 +69,64 @@ public class MultipleMode : MonoBehaviour
         }
     }
 
+    public void ClearSplitCharacter()
+    {
+        splitCharacter = string.Empty;
+        splitInputField.text = splitCharacter;
+    }
+
     public void ClearPrefix()
     {
         prefixFileName = string.Empty;
         prefixInputField.text = prefixFileName;
+    }
+
+    public void ProcessContents()
+    {
+        if (textLines.Length == 0) return;
+
+        int counter = 0;
+        List<string> fileNameList = new List<string>();
+        List<string> contentList = new List<string>();
+
+        foreach (string a in textLines)
+        {
+            /* break loop when instantiate more than maximum lines */
+            if (counter >= maximumDisplayLine) break;
+
+            /* create content text object in preview container */
+            ContentText contentText = Instantiate(textContentPrefab, contentPreviewRect.content.transform);
+
+            string filename = "";
+            string content = "";
+            /* split text line to filename and content */
+            if (splitCharacter != "")
+            {
+                string[] spliter = a.Split(splitCharacter.ToCharArray());
+
+                if (spliter.Length < 2)
+                {
+                    Debug.Log("can not split content");
+                    break;
+                }
+
+                filename = prefixFileName + spliter.First<string>();
+                content = string.Join(" ", spliter.Skip(1));
+            }
+            else
+            {
+                filename = prefixFileName + "_" + (counter + 1).ToString();
+                content = a;
+            }
+
+            fileNameList.Add(filename);
+            contentList.Add(content);
+
+            /* set text to display each content line */
+            string displayContent = string.Format("Filename: {0}, Content: {1}", filename, content);
+            contentText.SetElement(displayContent);
+            counter++;
+        }
     }
 
     public void SelectFilePath()
@@ -92,27 +157,21 @@ public class MultipleMode : MonoBehaviour
     private void ReadFile()
     {
         string[] lines = File.ReadAllLines(filePath);
-        lineCountText.text = string.Format("Line count: {0}", lines.Length);
+
+
+        if (lines.Length == 0)
+        {
+            /* can not read content from this file path */
+            return;
+        }
+
+        textLines = lines;
+        contents = lines;
+        lineCountText.text = string.Format("Line count: {0}", textLines.Length);
 
         ClearPreviewContainer();
 
-        if (lines.Length > 0)
-        {
-            int counter = 0;
-            foreach (string a in lines)
-            {
-                /* break loop when instantiate more than maximum lines */
-                if (counter >= maximumDisplayLine) break;
 
-                /* create content text object in preview container */
-                ContentText contentText = Instantiate(textContentPrefab, contentPreviewRect.content.transform);
-                /* set text to display each content line */
-                contentText.SetElement(a);
-                counter++;
-            }
-        }else{
-            /* do something if can not read data from file */
-        }
     }
 
     public void DisplayPath()
