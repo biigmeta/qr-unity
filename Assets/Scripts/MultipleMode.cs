@@ -85,6 +85,8 @@ public class MultipleMode : MonoBehaviour
     {
         if (textLines.Length == 0) return;
 
+        ClearPreviewContainer();
+        
         int counter = 0;
         List<string> fileNameList = new List<string>();
         List<string> contentList = new List<string>();
@@ -123,7 +125,7 @@ public class MultipleMode : MonoBehaviour
             contentList.Add(content);
 
             /* set text to display each content line */
-            string displayContent = string.Format("Filename: {0}, Content: {1}", filename, content);
+            string displayContent = string.Format("Filename: {0}, \t Content: {1}", filename, content);
             contentText.SetElement(displayContent);
             counter++;
         }
@@ -168,10 +170,6 @@ public class MultipleMode : MonoBehaviour
         textLines = lines;
         contents = lines;
         lineCountText.text = string.Format("Line count: {0}", textLines.Length);
-
-        ClearPreviewContainer();
-
-
     }
 
     public void DisplayPath()
