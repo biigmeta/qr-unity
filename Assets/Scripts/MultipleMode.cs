@@ -11,9 +11,10 @@ public class MultipleMode : MonoBehaviour
     [Header("Properties")]
     public bool canGenerate = false;
     public string filePath;
-    public string[] contents;
     public string[] textLines;
-    public string[] fileNames;
+
+    public List<string> fileNameList = new List<string>();
+    public List<string> contentList = new List<string>();
 
     public string splitCharacter;
     public string prefixFileName;
@@ -86,10 +87,11 @@ public class MultipleMode : MonoBehaviour
         if (textLines.Length == 0) return;
 
         ClearPreviewContainer();
-        
+
         int counter = 0;
-        List<string> fileNameList = new List<string>();
-        List<string> contentList = new List<string>();
+
+        fileNameList.Clear();
+        contentList.Clear();
 
         foreach (string a in textLines)
         {
@@ -117,7 +119,7 @@ public class MultipleMode : MonoBehaviour
             }
             else
             {
-                filename = prefixFileName + "_" + (counter + 1).ToString();
+                filename = prefixFileName + (counter + 1).ToString();
                 content = a;
             }
 
@@ -168,7 +170,6 @@ public class MultipleMode : MonoBehaviour
         }
 
         textLines = lines;
-        contents = lines;
         lineCountText.text = string.Format("Line count: {0}", textLines.Length);
     }
 

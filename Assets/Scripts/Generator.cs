@@ -130,7 +130,7 @@ public class Generator : MonoBehaviour
 
         if (mode == MODE.MULTI)
         {
-            if (multipleMode.contents.Length == 0)
+            if (multipleMode.contentList.Count == 0)
             {
                 generateQRCodeButton.interactable = false;
                 return;
@@ -212,17 +212,21 @@ public class Generator : MonoBehaviour
         yield return null;
         isProcessing = true;
 
-        // currentNumber = startNumber;
+        int maxContent = multipleMode.contentList.Count;
+        int currentIndex = 0;
 
-        // while (currentNumber <= endNumber)
-        // {
-        //     onGenerate = true;
-        //     currentFileName = currentNumber + ".png";
-        //     string content = "https://acmecs-businessmatching.com/match/?uid=" + currentNumber + "&openExternalBrowser=1";
-        //     qrCodeEncodeController.Encode(content);
-        //     currentNumber++;
-        //     yield return new WaitUntil(() => onGenerate == false);
-        // }
+        while (currentIndex < maxContent)
+        {
+            onGenerate = true;
+            currentFileName = multipleMode.fileNameList[currentIndex] + ".png";
+            qrCodeEncodeController.Encode(multipleMode.contentList[currentIndex]);
+
+
+            yield return new WaitUntil(() => onGenerate == false);
+            currentIndex++;
+            progressText.text = string.Format("{0}/{1}", currentIndex, maxContent);
+            progressBarImage.fillAmount = (float)currentIndex / (float)maxContent;
+        }
 
         isProcessing = false;
         resetButton.interactable = true;
