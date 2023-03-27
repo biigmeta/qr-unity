@@ -12,12 +12,19 @@ public class Scanner : MonoBehaviour
 
     [Header("Camera Decode")]
     public RawImage qrCameraPreview;
+    public Toggle autoResetToggle;
+    public GameObject scanFrame;
+    public Button resetCameraButton;
+    public int originQRCameraPreviewWidth;
+    public int originQRCameraPreviewHeight;
     public bool onSetCameraPreviewSize = false;
+    public bool isAutoReset = false;
 
     [Header("Texture Decode")]
     public string filePath;
-    public InputField filePathInputField;
     public RawImage decodeTexturePreview;
+    public int originDecodeTexturePreviewWidth;
+    public int originDecodeTexturePreviewHeight;
 
     private void Start()
     {
@@ -25,15 +32,47 @@ public class Scanner : MonoBehaviour
 
         qrCodeDecodeController.onQRScanFinished += OnQRScaned;
         qrCodeDecodeController.StopWork();
+        scanFrame.SetActive(qrCodeDecodeController.e_DeviceController.isPlaying);
+        resetCameraButton.gameObject.SetActive(false);
 
         FileBrowser.SetFilters(true, new FileBrowser.Filter("Image Files", ".png", ".jpg", ".jpeg"));
         FileBrowser.SetDefaultFilter(".png");
         FileBrowser.SetExcludedExtensions(".txt", ".pdf", ".lnk", ".tmp", ".zip", ".rar", ".exe");
+
+        originQRCameraPreviewWidth = (int)qrCameraPreview.rectTransform.sizeDelta.x;
+        originQRCameraPreviewHeight = (int)qrCameraPreview.rectTransform.sizeDelta.y;
+
+        originDecodeTexturePreviewWidth = (int)decodeTexturePreview.rectTransform.sizeDelta.x;
+        originDecodeTexturePreviewHeight = (int)decodeTexturePreview.rectTransform.sizeDelta.y;
+
+        isAutoReset = false;
+        autoResetToggle.isOn = isAutoReset;
+    }
+
+    void Initialize()
+    {
+        resultText.text = string.Format("{0}", string.Empty);
     }
 
     private void OnQRScaned(string msg)
     {
         DisplayResult(msg);
+
+        if (autoResetToggle.isOn)
+        {
+            resetCameraButton.gameObject.SetActive(false);
+            StartCoroutine(CountResetQR());
+        }
+        else
+        {
+            resetCameraButton.gameObject.SetActive(true);
+        }
+    }
+
+    IEnumerator CountResetQR()
+    {
+        yield return new WaitForSeconds(1);
+        ResetScan();
     }
 
     public void ToggleScanner()
@@ -41,12 +80,21 @@ public class Scanner : MonoBehaviour
         if (!qrCodeDecodeController.e_DeviceController.isPlaying)
         {
             qrCodeDecodeController.StartWork();
+            scanFrame.SetActive(true);
             StartCoroutine(StartQRCamera());
         }
         else
         {
             qrCodeDecodeController.StopWork();
+            scanFrame.SetActive(false);
         }
+
+        resetCameraButton.gameObject.SetActive(false);
+    }
+
+    public void ToggleAutoReset()
+    {
+        isAutoReset = autoResetToggle.isOn;
     }
 
     IEnumerator StartQRCamera()
@@ -58,12 +106,9 @@ public class Scanner : MonoBehaviour
             int textureWidth = qrCodeDecodeController.e_DeviceController.dWebCam.preview.width;
             int textureHeight = qrCodeDecodeController.e_DeviceController.dWebCam.preview.height;
 
-            int previewWidth = (int)qrCameraPreview.rectTransform.sizeDelta.x;
-            int previewHeight = (int)qrCameraPreview.rectTransform.sizeDelta.y;
-
             /* fixed height */
-            int newWidth = (int)(((float)textureWidth / (float)textureHeight) * previewWidth);
-            qrCameraPreview.rectTransform.sizeDelta = new Vector2(newWidth, previewHeight);
+            int newWidth = (int)(((float)textureWidth / (float)textureHeight) * originQRCameraPreviewWidth);
+            qrCameraPreview.rectTransform.sizeDelta = new Vector2(newWidth, originQRCameraPreviewHeight);
             onSetCameraPreviewSize = true;
         }
 
@@ -73,11 +118,17 @@ public class Scanner : MonoBehaviour
     public void ResetScan()
     {
         qrCodeDecodeController.Reset();
+        resetCameraButton.gameObject.SetActive(false);
     }
 
     /**********************************************************************************************************/
     /*************************************  DECODE BY FROM TEXTURE2D  *****************************************/
     /**********************************************************************************************************/
+
+    public void ResetTexture()
+    {
+        
+    }
 
     public void SelectFilePath()
     {
@@ -100,18 +151,28 @@ public class Scanner : MonoBehaviour
         {
             filePath = string.Empty;
         }
-
-        filePathInputField.text = filePath;
     }
 
     private void ReadFile(string path)
     {
         byte[] bytes = File.ReadAllBytes(path);
         Texture2D texture = new Texture2D(1, 1);
-        Debug.Log(bytes.Length);
 
         texture.LoadImage(bytes);
         texture.Apply();
+
+        if (texture.width <= texture.height)
+        {
+            /* Protrait => fit height */
+            int newWidth = (int)((float)originDecodeTexturePreviewHeight * ((float)texture.width / (float)texture.height));
+            decodeTexturePreview.rectTransform.sizeDelta = new Vector2(newWidth, originDecodeTexturePreviewHeight);
+        }
+        else
+        {
+            /* Landscape => fit width */
+            int newHeight = (int)((float)originDecodeTexturePreviewWidth * ((float)texture.height / (float)texture.width));
+            decodeTexturePreview.rectTransform.sizeDelta = new Vector2(originDecodeTexturePreviewWidth, newHeight);
+        }
 
         decodeTexturePreview.texture = texture;
         TextureDecode(texture);
@@ -122,7 +183,6 @@ public class Scanner : MonoBehaviour
         string msg = QRCodeDecodeController.DecodeByStaticPic(texture);
         DisplayResult(msg);
     }
-
 
     private void DisplayResult(string msg)
     {
