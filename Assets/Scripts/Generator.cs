@@ -56,6 +56,11 @@ public class Generator : MonoBehaviour
         OnChangeMode();
     }
 
+    public void QuitApp()
+    {
+        Application.Quit();
+    }
+
 
     public void OnChangeMode()
     {

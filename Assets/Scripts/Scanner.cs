@@ -31,13 +31,23 @@ public class Scanner : MonoBehaviour
         if (qrCodeDecodeController == null) qrCodeDecodeController = GetComponent<QRCodeDecodeController>();
 
         qrCodeDecodeController.onQRScanFinished += OnQRScaned;
-        qrCodeDecodeController.StopWork();
-        scanFrame.SetActive(qrCodeDecodeController.e_DeviceController.isPlaying);
-        resetCameraButton.gameObject.SetActive(false);
+
 
         FileBrowser.SetFilters(true, new FileBrowser.Filter("Image Files", ".png", ".jpg", ".jpeg"));
         FileBrowser.SetDefaultFilter(".png");
         FileBrowser.SetExcludedExtensions(".txt", ".pdf", ".lnk", ".tmp", ".zip", ".rar", ".exe");
+
+
+        StartCoroutine(Initialize());
+    }
+
+    IEnumerator Initialize()
+    {
+        yield return null;
+
+
+        if (qrCodeDecodeController.e_DeviceController.isPlaying) qrCodeDecodeController.StopWork();
+
 
         originQRCameraPreviewWidth = (int)qrCameraPreview.rectTransform.sizeDelta.x;
         originQRCameraPreviewHeight = (int)qrCameraPreview.rectTransform.sizeDelta.y;
@@ -45,14 +55,13 @@ public class Scanner : MonoBehaviour
         originDecodeTexturePreviewWidth = (int)decodeTexturePreview.rectTransform.sizeDelta.x;
         originDecodeTexturePreviewHeight = (int)decodeTexturePreview.rectTransform.sizeDelta.y;
 
+        resultText.text = string.Format("{0}", string.Empty);
+        scanFrame.SetActive(false);
+        resetCameraButton.gameObject.SetActive(false);
+
         isAutoReset = false;
         autoResetToggle.isOn = isAutoReset;
-        Initialize();
-    }
 
-    void Initialize()
-    {
-        resultText.text = string.Format("{0}", string.Empty);
     }
 
     private void OnQRScaned(string msg)
@@ -128,7 +137,7 @@ public class Scanner : MonoBehaviour
 
     public void ResetTexture()
     {
-        
+
     }
 
     public void SelectFilePath()
