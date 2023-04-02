@@ -47,6 +47,7 @@ public class Scanner : MonoBehaviour
 
         isAutoReset = false;
         autoResetToggle.isOn = isAutoReset;
+        Initialize();
     }
 
     void Initialize()

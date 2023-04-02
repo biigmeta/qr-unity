@@ -20,25 +20,24 @@ public class Generator : MonoBehaviour
     public GameObject singlePanel;
     public GameObject multiPanel;
 
-
     [Header("Properies")]
     public string savePath;
     public string currentFileName;
     public bool isProcessing = false;
     public bool onGenerate = false;
 
-    [Header("UI")]
 
+    [Header("UI")]
+    public Dropdown dropdownMode;
     public InputField savePathInputField;
     public RawImage qrPreview;
     public Text progressText;
     public Text currentFileNameText;
     public Text fullPathText;
     public Image progressBarImage;
-
-
     public Button generateQRCodeButton;
     public Button resetButton;
+
 
     [Header("Component")]
     public QRCodeEncodeController qrCodeEncodeController;
@@ -54,18 +53,25 @@ public class Generator : MonoBehaviour
         singleMode.m_OnSingleCodeCangenerate += OnSingleCodeCangenerate;
 
         Reset();
-        ChangeMode("single");
+        OnChangeMode();
     }
 
 
-    public void ChangeMode(string mode)
+    public void OnChangeMode()
     {
-        this.mode = mode == "single" ? MODE.SINGLE : MODE.MULTI;
-        singlePanel.SetActive(this.mode == MODE.SINGLE);
-        multiPanel.SetActive(this.mode == MODE.MULTI);
+        if (dropdownMode.value == 0)
+        {
+            mode = MODE.SINGLE;
 
-        /* display mode */
-        modeText.text = string.Format("{0} MODE", this.mode.ToString());
+        }
+
+        if (dropdownMode.value == 1)
+        {
+            mode = MODE.MULTI;
+        }
+
+        singleMode.gameObject.SetActive(mode == MODE.SINGLE);
+        multipleMode.gameObject.SetActive(mode == MODE.MULTI);
     }
 
     private void OnSingleCodeCangenerate(bool canGenerate)
