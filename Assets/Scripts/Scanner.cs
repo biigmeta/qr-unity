@@ -14,17 +14,22 @@ public class Scanner : MonoBehaviour
     public RawImage qrCameraPreview;
     public Toggle autoResetToggle;
     public GameObject scanFrame;
-    public Button resetCameraButton;
+    public Button toggleCameraButton;
+    public Button resetButton;
     public int originQRCameraPreviewWidth;
     public int originQRCameraPreviewHeight;
     public bool onSetCameraPreviewSize = false;
     public bool isAutoReset = false;
 
-    [Header("Texture Decode")]
+    [Header("Image Decode")]
     public string filePath;
     public RawImage decodeTexturePreview;
     public int originDecodeTexturePreviewWidth;
     public int originDecodeTexturePreviewHeight;
+
+    [Header("Texture")]
+    public Texture2D cameraTexture;
+    public Texture2D previewTexture;
 
     private void Start()
     {
@@ -32,22 +37,26 @@ public class Scanner : MonoBehaviour
 
         qrCodeDecodeController.onQRScanFinished += OnQRScaned;
 
-
         FileBrowser.SetFilters(true, new FileBrowser.Filter("Image Files", ".png", ".jpg", ".jpeg"));
         FileBrowser.SetDefaultFilter(".png");
         FileBrowser.SetExcludedExtensions(".txt", ".pdf", ".lnk", ".tmp", ".zip", ".rar", ".exe");
-
 
         StartCoroutine(Initialize());
     }
 
     IEnumerator Initialize()
     {
-        yield return null;
 
+        if (WebCamTexture.devices.Length == 0)
+        {
+            yield break;
+        }
+
+        yield return null;
 
         if (qrCodeDecodeController.e_DeviceController.isPlaying) qrCodeDecodeController.StopWork();
 
+        toggleCameraButton.transform.GetChild(0).GetComponent<Text>().text = string.Format("{0}", qrCodeDecodeController.e_DeviceController.isPlaying ? "Turn off camera." : "Turn on camera.");
 
         originQRCameraPreviewWidth = (int)qrCameraPreview.rectTransform.sizeDelta.x;
         originQRCameraPreviewHeight = (int)qrCameraPreview.rectTransform.sizeDelta.y;
@@ -57,7 +66,7 @@ public class Scanner : MonoBehaviour
 
         resultText.text = string.Format("{0}", string.Empty);
         scanFrame.SetActive(false);
-        resetCameraButton.gameObject.SetActive(false);
+        resetButton.gameObject.SetActive(false);
 
         isAutoReset = false;
         autoResetToggle.isOn = isAutoReset;
@@ -70,16 +79,16 @@ public class Scanner : MonoBehaviour
 
         if (autoResetToggle.isOn)
         {
-            resetCameraButton.gameObject.SetActive(false);
-            StartCoroutine(CountResetQR());
+            resetButton.gameObject.SetActive(false);
+            StartCoroutine(CountdownResetQR());
         }
         else
         {
-            resetCameraButton.gameObject.SetActive(true);
+            resetButton.gameObject.SetActive(true);
         }
     }
 
-    IEnumerator CountResetQR()
+    IEnumerator CountdownResetQR()
     {
         yield return new WaitForSeconds(1);
         ResetScan();
@@ -97,9 +106,13 @@ public class Scanner : MonoBehaviour
         {
             qrCodeDecodeController.StopWork();
             scanFrame.SetActive(false);
+            toggleCameraButton.transform.GetChild(0).GetComponent<Text>().text = string.Format("{0}", qrCodeDecodeController.e_DeviceController.isPlaying ? "Turn off camera." : "Turn on camera.");
+
+            /* reset camera preview texture */
+            qrCameraPreview.texture = null;
         }
 
-        resetCameraButton.gameObject.SetActive(false);
+        resetButton.gameObject.SetActive(false);
     }
 
     public void ToggleAutoReset()
@@ -122,23 +135,22 @@ public class Scanner : MonoBehaviour
             onSetCameraPreviewSize = true;
         }
 
+        toggleCameraButton.transform.GetChild(0).GetComponent<Text>().text = string.Format("{0}", qrCodeDecodeController.e_DeviceController.isPlaying ? "Turn off camera." : "Turn on camera.");
+
         qrCameraPreview.texture = qrCodeDecodeController.e_DeviceController.dWebCam.preview;
     }
 
     public void ResetScan()
     {
         qrCodeDecodeController.Reset();
-        resetCameraButton.gameObject.SetActive(false);
+        decodeTexturePreview.texture = null;
+        resetButton.gameObject.SetActive(false);
+        resultText.text = string.Empty;
     }
 
     /**********************************************************************************************************/
     /*************************************  DECODE BY FROM TEXTURE2D  *****************************************/
     /**********************************************************************************************************/
-
-    public void ResetTexture()
-    {
-
-    }
 
     public void SelectFilePath()
     {
@@ -197,5 +209,6 @@ public class Scanner : MonoBehaviour
     private void DisplayResult(string msg)
     {
         resultText.text = string.Format("{0}", msg);
+        resetButton.gameObject.SetActive(true);
     }
 }
