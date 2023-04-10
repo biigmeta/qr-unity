@@ -5641,7 +5641,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Result
+  m_Text: 
 --- !u!222 &1188234761
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -8189,7 +8189,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Camera
+  m_Text: Turn on Camera
 --- !u!222 &1497582429
 CanvasRenderer:
   m_ObjectHideFlags: 0

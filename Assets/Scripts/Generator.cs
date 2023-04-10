@@ -192,10 +192,10 @@ public class Generator : MonoBehaviour
 
     IEnumerator Co_GenerateSingle()
     {
-        Debug.Log("start generate");
-        yield return null;
         isProcessing = true;
         onGenerate = true;
+
+        yield return null;
 
         int maxContent = 1;
         int currentIndex = 0;
@@ -213,9 +213,10 @@ public class Generator : MonoBehaviour
 
         currentFileNameText.text = string.Format("File name: {0}", currentFileName);
 
-        qrCodeEncodeController.Encode(singleMode.text);
+        int code = qrCodeEncodeController.Encode(singleMode.text);
         yield return new WaitUntil(() => onGenerate == false);
-
+        Debug.Log(code);
+        
         currentIndex++;
         progressText.text = string.Format("{0}/{1}", currentIndex, maxContent);
         progressBarImage.fillAmount = (float)currentIndex / (float)maxContent;

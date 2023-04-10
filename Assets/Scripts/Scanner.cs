@@ -79,7 +79,7 @@ public class Scanner : MonoBehaviour
 
     private void OnQRScaned(string msg)
     {
-        DisplayResult(msg);
+        StartCoroutine(_DisplayResult(msg));
 
         if (autoResetToggle.isOn)
         {
@@ -207,12 +207,18 @@ public class Scanner : MonoBehaviour
     private void TextureDecode(Texture2D texture)
     {
         string msg = QRCodeDecodeController.DecodeByStaticPic(texture);
-        DisplayResult(msg);
+        StartCoroutine(_DisplayResult(msg));
     }
 
-    private void DisplayResult(string msg)
+
+    IEnumerator _DisplayResult(string msg)
     {
+        resultText.gameObject.SetActive(false);
         resultText.text = string.Format("{0}", msg);
+
+        yield return null;
+
+        resultText.gameObject.SetActive(true);
         resetButton.gameObject.SetActive(true);
     }
 }
