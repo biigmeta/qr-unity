@@ -7,8 +7,9 @@ using System.IO;
 
 public class Scanner : MonoBehaviour
 {
+    [Header("Components")]
     public QRCodeDecodeController qrCodeDecodeController;
-    public Text resultText;
+    public DialogMessage dialogMessage;
 
     [Header("Camera Decode")]
     public RawImage qrCameraPreview;
@@ -26,6 +27,9 @@ public class Scanner : MonoBehaviour
     public RawImage decodeTexturePreview;
     public int originDecodeTexturePreviewWidth;
     public int originDecodeTexturePreviewHeight;
+
+    [Header("UI")]
+    public Text resultText;
 
     [Header("Texture")]
     public Texture2D cameraTexture;

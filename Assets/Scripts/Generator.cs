@@ -15,6 +15,7 @@ public class Generator : MonoBehaviour
     [Header("Script Component")]
     public SingleMode singleMode;
     public MultipleMode multipleMode;
+    public DialogMessage dialogMessage;
 
     [Header("Panel")]
     public GameObject singlePanel;
@@ -38,7 +39,6 @@ public class Generator : MonoBehaviour
     public Button generateQRCodeButton;
     public Button resetButton;
 
-
     [Header("Component")]
     public QRCodeEncodeController qrCodeEncodeController;
 
@@ -52,13 +52,19 @@ public class Generator : MonoBehaviour
         qrCodeEncodeController.onQREncodeFinished += OnEncoded;
         singleMode.m_OnSingleCodeCangenerate += OnSingleCodeCangenerate;
 
+        if (dialogMessage != null) dialogMessage.Close();
+
         Reset();
         OnChangeMode();
     }
 
     public void QuitApp()
     {
-        Application.Quit();
+        dialogMessage.OpenMessage("Do you want to quit?", () =>
+        {
+            Application.Quit();
+        });
+
     }
 
 
